@@ -21,23 +21,44 @@ pthread_t reader,analyzer,printer,watchdog,logger;
 
 //Main functions
 
-void* read_data(void* args)
+void* readData(void* arg)
 {
-    if((procStatFile=fopen("proc/stat","r"))==NULL)
+    for(;;)
     {
-        exit(EXIT_FAILURE);
+        if((procStatFile=fopen("/proc/stat","r"))==NULL)
+        {
+            exit(EXIT_FAILURE);
+        }
+        
+        char* lineBuf = NULL;
+        size_t lineBufSize = 0;
+        int lineCount = 0;
+        ssize_t lineSize = 0;
+
+        lineSize = getline(&lineBuf, &lineBufSize, procStatFile);
+
+        while (lineCount <= 11)
+        {
+            lineCount++;
+
+            printf("line[%06d]: chars=%06zd, buf size=%06zu, contents: %s", lineCount,
+                lineSize, lineBufSize, lineBuf);
+
+            lineSize = getline(&lineBuf, &lineBufSize, procStatFile);
+        }
+
+        free(lineBuf);
+        lineBuf = NULL;
     }
 
-    char* whichLine = NULL;
-    size_t length = 0;
-    ssize_t line = 0;
 
-    while((line=getline(&whichLine,&length,procStatFile))!= -1)
-    {
-        
-        
-    } 
+
     
+}
+
+void* loggingData(void* arg)
+{
+
 }
 
 
@@ -49,11 +70,16 @@ void clearAll()
     pthread_join(printer,NULL);
     pthread_join(watchdog,NULL);
     pthread_join(logger,NULL);
+
+
+    //closing file
+    fclose(procStatFile);
+    procStatFile=NULL;
 }
 
 int main()
 {
-    pthread_create(&reader,NULL,&read_data,NULL);
+    pthread_create(&reader,NULL,&readData,NULL);
     clearAll();
     return EXIT_SUCCESS;
 }
