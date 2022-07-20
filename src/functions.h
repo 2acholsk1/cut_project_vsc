@@ -14,7 +14,9 @@ struct Queue
     unsigned capacity;
     int* array;
 };
-
+//Queue functions
+int isFull(struct Queue* queue);
+int isEmpty(struct Queue* queue);
 struct Queue* createQueue(unsigned capacity);
 void enQueue(struct Queue* queue, int arg);
 int deQueue(struct Queue* queue);
