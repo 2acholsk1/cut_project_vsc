@@ -1,7 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <pthread.h>
-#include <unistd.h>
+#include "functions.h"
 
 
 
@@ -37,12 +34,12 @@ void* readData(void* arg)
 
         lineSize = getline(&lineBuf, &lineBufSize, procStatFile);
 
-        while (lineCount <= 11)
+        while (lineCount <= 12)
         {
             lineCount++;
 
-            printf("line[%06d]: chars=%06zd, buf size=%06zu, contents: %s", lineCount,
-                lineSize, lineBufSize, lineBuf);
+            /*printf("line[%06d]: chars=%06zd, buf size=%06zu, contents: %s", lineCount,
+                lineSize, lineBufSize, lineBuf); */
 
             lineSize = getline(&lineBuf, &lineBufSize, procStatFile);
         }
