@@ -8,7 +8,8 @@ FILE *procStatFile;
 
 
 
-//Variables
+//Queues
+
 
 
 
@@ -20,8 +21,10 @@ pthread_t reader,analyzer,printer,watchdog,logger;
 
 void* readData(void* arg)
 {
+    
     for(;;)
     {
+        
         if((procStatFile=fopen("/proc/stat","r"))==NULL)
         {
             exit(EXIT_FAILURE);
@@ -34,14 +37,19 @@ void* readData(void* arg)
 
         lineSize = getline(&lineBuf, &lineBufSize, procStatFile);
 
-        while (lineCount <= 12)
+        while (1)
         {
             lineCount++;
 
             /*printf("line[%06d]: chars=%06zd, buf size=%06zu, contents: %s", lineCount,
-                lineSize, lineBufSize, lineBuf); */
+                lineSize, lineBufSize, lineBuf); */ 
 
             lineSize = getline(&lineBuf, &lineBufSize, procStatFile);
+            if(strncmp(lineBuf,"cpu",3) != 1)
+            {
+                break;
+            }
+            
         }
 
         free(lineBuf);
