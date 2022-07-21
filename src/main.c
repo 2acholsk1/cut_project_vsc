@@ -41,6 +41,7 @@ void* readData(void* arg)
         {
             lineCount++;
 
+<<<<<<< HEAD
             printf("line[%06d]: chars=%06zd, buf size=%06zu, contents: %s", lineCount,
                 lineSize, lineBufSize, lineBuf); 
 
@@ -49,11 +50,21 @@ void* readData(void* arg)
             char checkCpuChar[3];
             strncpy(checkCpuChar, lineBuf, 3);
             if(strcmp("cpu",checkCpuChar) != 0 )
+=======
+            /*printf("line[%06d]: chars=%06zd, buf size=%06zu, contents: %s", lineCount,
+                lineSize, lineBufSize, lineBuf); */ 
+
+            lineSize = getline(&lineBuf, &lineBufSize, procStatFile);
+            if(strncmp(lineBuf,"cpu",3) != 1)
+>>>>>>> origin/master
             {
                 break;
             }
             
+<<<<<<< HEAD
             
+=======
+>>>>>>> origin/master
         }
 
         free(lineBuf);
