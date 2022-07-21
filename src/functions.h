@@ -6,10 +6,6 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <string.h>
-<<<<<<< HEAD
-#include <stdbool.h>
-=======
->>>>>>> origin/master
 
 struct Queue
 {
