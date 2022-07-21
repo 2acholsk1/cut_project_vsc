@@ -63,8 +63,65 @@ struct cpuData rear(struct Queue* queue)
     return queue->array[queue->rear];
 }
 
-struct cpuData* createCpuData(struct cpuData* arg,char* lineBuf)
+void* cuttingCpuData(struct cpuData* arg,char* lineBuf)
 {
-    char* array = malloc(sizeof(lineBuf));
+    //char* array = malloc(sizeof(lineBuf)); 
+    char* out = strtok(lineBuf, " ");
+    int counter = 0;
+    uint64_t toConvert;
+    while (out != NULL)
+    {
+        counter++;
+        switch (counter)
+        {
+        case 1:
+            toConvert = strtoull(out, NULL , 0);
+            arg->user = toConvert;
+            out = strtok (NULL, " ");
+            break;
+        case 2:
+            toConvert = strtoull(out, NULL , 0);
+            arg->nice = toConvert;
+            out = strtok (NULL, " ");
+            break;
+        case 3:
+            toConvert = strtoull(out, NULL , 0);
+            arg->system = toConvert;
+            out = strtok (NULL, " ");
+            break;
+        case 4:
+            toConvert = strtoull(out, NULL , 0);
+            arg->idle = toConvert;
+            out = strtok (NULL, " ");
+            break;
+        case 5:
+            toConvert = strtoull(out, NULL , 0);
+            arg->iowait = toConvert;
+            out = strtok (NULL, " ");
+            break;
+        case 6:
+            toConvert = strtoull(out, NULL , 0);
+            arg->irq = toConvert;
+            out = strtok (NULL, " ");
+            break;
+        case 7:
+            toConvert = strtoull(out, NULL , 0);
+            arg->softirq = toConvert;
+            out = strtok (NULL, " ");
+            break;
+        case 8:
+            toConvert = strtoull(out, NULL , 0);
+            arg->steal = toConvert;
+            out = strtok (NULL, " ");
+            break;
+        
+        default:
+            break;
+        }
+    }
     
+
+
+    
+
 };

@@ -16,17 +16,6 @@ struct Queue
     unsigned capacity;
     struct cpuData* array;
 };
-
-//Queue functions
-int isFull(struct Queue* queue);
-int isEmpty(struct Queue* queue);
-struct Queue* createQueue(unsigned capacity);
-void enQueue(struct Queue* queue, struct cpuData arg);
-struct cpuData deQueue(struct Queue* queue);
-struct cpuData front(struct Queue* queue);
-struct cpuData rear(struct Queue* queue);
-
-//structure for cutting
 struct cpuData
 {
     uint64_t user;
@@ -39,7 +28,19 @@ struct cpuData
     uint64_t steal;
 };
 
-struct cpuData* createCpuData(struct cpuData* arg,char* lineBuf);
+
+//Queue functions
+int isFull(struct Queue* queue);
+int isEmpty(struct Queue* queue);
+struct Queue* createQueue(unsigned capacity);
+void enQueue(struct Queue* queue, struct cpuData arg);
+struct cpuData deQueue(struct Queue* queue);
+struct cpuData front(struct Queue* queue);
+struct cpuData rear(struct Queue* queue);
+
+
+
+void* cuttingCpuData(struct cpuData* arg,char* lineBuf);
 
 
 //Function for cutting string

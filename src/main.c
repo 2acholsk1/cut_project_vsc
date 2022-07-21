@@ -34,6 +34,7 @@ void* readData(void* arg)
         size_t lineBufSize = 0;
         int lineCount = 0;
         ssize_t lineSize = 0;
+        struct cpuData toSent[lineCount];
 
         lineSize = getline(&lineBuf, &lineBufSize, procStatFile);
 
