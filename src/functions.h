@@ -6,6 +6,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdint.h>
 
 struct Queue
 {
@@ -13,16 +14,33 @@ struct Queue
     int rear;
     int size;
     unsigned capacity;
-    int* array;
+    struct cpuData* array;
 };
+
 //Queue functions
 int isFull(struct Queue* queue);
 int isEmpty(struct Queue* queue);
 struct Queue* createQueue(unsigned capacity);
-void enQueue(struct Queue* queue, int arg);
-int deQueue(struct Queue* queue);
-int front(struct Queue* queue);
-int rear(struct Queue* queue);
+void enQueue(struct Queue* queue, struct cpuData arg);
+struct cpuData deQueue(struct Queue* queue);
+struct cpuData front(struct Queue* queue);
+struct cpuData rear(struct Queue* queue);
+
+//structure for cutting
+struct cpuData
+{
+    uint64_t user;
+    uint64_t nice;
+    uint64_t system;
+    uint64_t idle;
+    uint64_t iowait;
+    uint64_t irq;
+    uint64_t softirq;
+    uint64_t steal;
+};
+
+struct cpuData* createCpuData(struct cpuData* arg,char* lineBuf);
+
 
 //Function for cutting string
 

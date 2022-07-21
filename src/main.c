@@ -9,7 +9,7 @@ FILE *procStatFile;
 
 
 //Queues
-
+struct Queue* readerQueue;
 
 
 
@@ -41,8 +41,8 @@ void* readData(void* arg)
         {
             lineCount++;
 
-            printf("line[%06d]: chars=%06zd, buf size=%06zu, contents: %s", lineCount,
-                lineSize, lineBufSize, lineBuf); 
+            // printf("line[%06d]: chars=%06zd, buf size=%06zu, contents: %s", lineCount,
+            //     lineSize, lineBufSize, lineBuf); 
 
             lineSize = getline(&lineBuf, &lineBufSize, procStatFile);
             
@@ -58,6 +58,8 @@ void* readData(void* arg)
 
         free(lineBuf);
         lineBuf = NULL;
+
+        
     }
 
 

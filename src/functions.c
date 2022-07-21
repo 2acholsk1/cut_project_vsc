@@ -22,7 +22,7 @@ int isEmpty(struct Queue* queue)
     return (queue->size == 0);
 }
 
-void enQueue(struct Queue* queue, int arg)
+void enQueue(struct Queue* queue, struct cpuData arg)
 {
     if(isFull(queue))
     {
@@ -33,32 +33,38 @@ void enQueue(struct Queue* queue, int arg)
     queue->size = queue->size + 1;
 }
 
-int deQueue(struct Queue* queue)
+struct cpuData deQueue(struct Queue* queue)
 {
     if(isEmpty(queue))
     {
-        return queue->capacity;
+        return queue->array[0];
     }
-    int item = queue->array[queue->front];
+    struct cpuData item = queue->array[queue->front];
     queue->front = (queue->front + 1) % queue->capacity;
     queue->size = queue->size - 1;
     return item;
 }
 
-int front(struct Queue* queue)
+struct cpuData front(struct Queue* queue)
 {
     if(isEmpty(queue))
     {
-        return queue->capacity;
+        return queue->array[0];
     }
     return queue->array[queue->front];
 }
 
-int rear(struct Queue* queue)
+struct cpuData rear(struct Queue* queue)
 {
     if(isEmpty(queue))
     {
-        return queue->capacity;
+        return queue->array[0];
     }
     return queue->array[queue->rear];
 }
+
+struct cpuData* createCpuData(struct cpuData* arg,char* lineBuf)
+{
+    char* array = malloc(sizeof(lineBuf));
+    
+};
