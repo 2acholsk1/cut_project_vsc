@@ -6,6 +6,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdbool.h>
 
 struct Queue
 {
@@ -24,7 +25,8 @@ int deQueue(struct Queue* queue);
 int front(struct Queue* queue);
 int rear(struct Queue* queue);
 
- 
+//Function for cutting string
+
 
 
 
