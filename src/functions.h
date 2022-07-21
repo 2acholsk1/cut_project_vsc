@@ -14,7 +14,7 @@ struct Queue
     int rear;
     int size;
     unsigned capacity;
-    struct cpuData* array;
+    int* array;
 };
 struct cpuData
 {
@@ -33,14 +33,14 @@ struct cpuData
 int isFull(struct Queue* queue);
 int isEmpty(struct Queue* queue);
 struct Queue* createQueue(unsigned capacity);
-void enQueue(struct Queue* queue, struct cpuData arg);
-struct cpuData deQueue(struct Queue* queue);
-struct cpuData front(struct Queue* queue);
-struct cpuData rear(struct Queue* queue);
+void enQueue(struct Queue* queue, int arg);
+int deQueue(struct Queue* queue);
+int front(struct Queue* queue);
+int rear(struct Queue* queue);
 
 
 
-void* cuttingCpuData(struct cpuData* arg,char* lineBuf);
+void cuttingCpuData(struct cpuData* arg,char* lineBuf);
 
 
 //Function for cutting string

@@ -1,5 +1,5 @@
 #include "functions.h"
-
+#include "functions.c"
 
 
 
@@ -32,30 +32,24 @@ void* readData(void* arg)
         
         char* lineBuf = NULL;
         size_t lineBufSize = 0;
-        int lineCount = 0;
         ssize_t lineSize = 0;
-        struct cpuData toSent[lineCount];
+        struct cpuData* toSent;
 
         lineSize = getline(&lineBuf, &lineBufSize, procStatFile);
 
-        while (1)
+
+
+        lineSize = getline(&lineBuf, &lineBufSize, procStatFile);
+            
+        char checkCpuChar[3];
+        strncpy(checkCpuChar, lineBuf, 3);
+        if(strcmp("cpu",checkCpuChar) != 0 )
         {
-            lineCount++;
-
-            // printf("line[%06d]: chars=%06zd, buf size=%06zu, contents: %s", lineCount,
-            //     lineSize, lineBufSize, lineBuf); 
-
-            lineSize = getline(&lineBuf, &lineBufSize, procStatFile);
-            
-            char checkCpuChar[3];
-            strncpy(checkCpuChar, lineBuf, 3);
-            if(strcmp("cpu",checkCpuChar) != 0 )
-            {
-                break;
-            }
-            
-            
+            break;
         }
+        
+            
+        
 
         free(lineBuf);
         lineBuf = NULL;
