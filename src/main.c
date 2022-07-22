@@ -48,7 +48,7 @@ void* readData(void* arg)
         cuttingCpuData(&toSent,lineBuf);
             
         
-
+        
         free(lineBuf);
         lineBuf = NULL;
 
