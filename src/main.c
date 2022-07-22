@@ -2,7 +2,7 @@
 #include "functions.c"
 
 
-
+#include <inttypes.h>
 //proc/stat/ file
 FILE *procStatFile;
 
@@ -13,8 +13,10 @@ struct Queue* readerQueue;
 
 
 
-//Threads
+//Threads and etc.
 pthread_t reader,analyzer,printer,watchdog,logger;
+
+pthread_mutex_t readerLineBufMutex;
 
 
 //Main functions
@@ -33,11 +35,9 @@ void* readData(void* arg)
         char* lineBuf = NULL;
         size_t lineBufSize = 0;
         ssize_t lineSize = 0;
-        struct cpuData* toSent;
 
         lineSize = getline(&lineBuf, &lineBufSize, procStatFile);
-
-            
+           
         char checkCpuChar[3];
         strncpy(checkCpuChar, lineBuf, 3);
         
@@ -45,19 +45,17 @@ void* readData(void* arg)
         {
             break;
         }
-        cuttingCpuData(&toSent,lineBuf);
-            
-        
+
+        pthread_mutex_lock(&readerLineBufMutex);
+        struct cpuData toSent = cuttingCpuData(lineBuf);
+        enQueue(readerQueue,toSent);
+        pthread_mutex_unlock(&readerLineBufMutex);    
         
         free(lineBuf);
         lineBuf = NULL;
 
         
-    }
-
-
-
-    
+    }   
 }
 
 void* loggingData(void* arg)

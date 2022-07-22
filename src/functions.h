@@ -7,17 +7,12 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdbool.h>
 
-typedef struct Queue
-{
-    int front;
-    int rear;
-    int size;
-    unsigned capacity;
-    int* array;
-}Queue;
+
 struct cpuData
 {
+    char* whichCpu;
     uint64_t user;
     uint64_t nice;
     uint64_t system;
@@ -26,21 +21,29 @@ struct cpuData
     uint64_t irq;
     uint64_t softirq;
     uint64_t steal;
-};
+}cpuData;
+
+struct Queue
+{
+    uint64_t front;
+    uint64_t rear;
+    uint64_t size;
+    unsigned capacity;
+    struct cpuData* array;
+}Queue;
 
 
 //Queue functions
-int isFull(struct Queue* queue);
-int isEmpty(struct Queue* queue);
-struct Queue* createQueue(unsigned capacity);
-void enQueue(struct Queue* queue, int arg);
-int deQueue(struct Queue* queue);
-int front(struct Queue* queue);
-int rear(struct Queue* queue);
+bool isFull(struct Queue* queue);
+bool isEmpty(struct Queue* queue);
+struct Queue* cretaeQueue(unsigned size);
+void enQueue(struct Queue* queue, struct cpuData arg);
+struct cpuData deQueue(struct Queue* queue);
+struct cpuData front(struct Queue* queue);
+struct cpuData rear(struct Queue* queue);
 
 
-
-void cuttingCpuData(struct cpuData* arg,char* lineBuf);
+struct cpuData cuttingCpuData(char* lineBuf);
 
 
 //Function for cutting string

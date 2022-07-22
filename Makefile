@@ -1,5 +1,5 @@
 CC = gcc
-CXXFLAGS = -std=c11 -Wall
+CXXFLAGS = -std=c11 -Wall -Wextra
 LDFLAGS = 
 
 APPNAME = cutProject
