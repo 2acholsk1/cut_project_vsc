@@ -8,14 +8,14 @@
 #include <string.h>
 #include <stdint.h>
 
-struct Queue
+typedef struct Queue
 {
     int front;
     int rear;
     int size;
     unsigned capacity;
     int* array;
-};
+}Queue;
 struct cpuData
 {
     uint64_t user;

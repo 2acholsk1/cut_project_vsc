@@ -9,7 +9,7 @@ struct Queue* createQueue(unsigned _capacity)
     queue->capacity = _capacity;
     queue->front = queue->size = 0;
     queue->rear = _capacity-1;
-    queue->array = (int)malloc(queue->capacity * sizeof(int));
+    queue->array = (int*)malloc(queue->capacity * sizeof(int));
     return queue;
 };
 
@@ -27,7 +27,7 @@ void enQueue(struct Queue* queue, int arg)
 {
     if(isFull(queue))
     {
-        return queue->array[0];
+        return EXIT_FAILURE;
     }
     queue->rear = (queue->rear + 1) % queue->capacity;
     queue->array[queue->rear] = arg;
@@ -38,7 +38,7 @@ int deQueue(struct Queue* queue)
 {
     if(isEmpty(queue))
     {
-        return queue->array[0];
+        return queue->capacity;
     }
     int item = queue->array[queue->front];
     queue->front = (queue->front + 1) % queue->capacity;
@@ -70,55 +70,40 @@ void cuttingCpuData(struct cpuData* arg,char* lineBuf)
     char* out = strtok(lineBuf, " ");
     int counter = 0;
     uint64_t toConvert;
-    while (out != NULL)
+    while (counter<9)
     {
-        counter++;
+        toConvert = atoll(out);
         switch (counter)
         {
         case 1:
-            toConvert = strtoull(out, NULL , 0);
             arg->user = toConvert;
-            out = strtok (NULL, " ");
             break;
         case 2:
-            toConvert = strtoull(out, NULL , 0);
             arg->nice = toConvert;
-            out = strtok (NULL, " ");
             break;
         case 3:
-            toConvert = strtoull(out, NULL , 0);
             arg->system = toConvert;
-            out = strtok (NULL, " ");
             break;
         case 4:
-            toConvert = strtoull(out, NULL , 0);
             arg->idle = toConvert;
-            out = strtok (NULL, " ");
             break;
         case 5:
-            toConvert = strtoull(out, NULL , 0);
             arg->iowait = toConvert;
-            out = strtok (NULL, " ");
             break;
         case 6:
-            toConvert = strtoull(out, NULL , 0);
             arg->irq = toConvert;
-            out = strtok (NULL, " ");
             break;
         case 7:
-            toConvert = strtoull(out, NULL , 0);
             arg->softirq = toConvert;
-            out = strtok (NULL, " ");
             break;
         case 8:
-            toConvert = strtoull(out, NULL , 0);
             arg->steal = toConvert;
-            out = strtok (NULL, " ");
             break;
-        
         default:
             break;
         }
+        counter++;
+        out = strtok (NULL, " ");
     }
     
 };

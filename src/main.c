@@ -37,17 +37,15 @@ void* readData(void* arg)
 
         lineSize = getline(&lineBuf, &lineBufSize, procStatFile);
 
-
-
-        lineSize = getline(&lineBuf, &lineBufSize, procStatFile);
             
         char checkCpuChar[3];
         strncpy(checkCpuChar, lineBuf, 3);
+        
         if(strcmp("cpu",checkCpuChar) != 0 )
         {
             break;
         }
-        
+        cuttingCpuData(&toSent,lineBuf);
             
         
 
