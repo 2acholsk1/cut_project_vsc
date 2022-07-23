@@ -8,39 +8,40 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <inttypes.h>
+#include <semaphore.h>
 
 
-struct cpuData
+typedef struct cpuData
 {
     char* whichCpu;
-    uint64_t user;
-    uint64_t nice;
-    uint64_t system;
-    uint64_t idle;
-    uint64_t iowait;
-    uint64_t irq;
-    uint64_t softirq;
-    uint64_t steal;
-}cpuData;
+    uint64_t user,nice,system,idle,iowait,irq,softirq,steal;
+};
+
+struct QNode
+{
+    struct cpuData key;
+    struct QNode* next;
+};
 
 struct Queue
 {
-    uint64_t front;
-    uint64_t rear;
-    uint64_t size;
-    unsigned capacity;
-    struct cpuData* array;
-}Queue;
+    struct QNode *front, *rear;
+};
 
+struct QNode* newNode(struct cpuData arg);
+struct Queue* createQueue();
+void enQueue(struct Queue* queue, struct cpuData arg);
+void deQueue(struct Queue* queue);
 
 //Queue functions
-bool isFull(struct Queue* queue);
-bool isEmpty(struct Queue* queue);
-struct Queue* cretaeQueue(unsigned size);
-void enQueue(struct Queue* queue, struct cpuData arg);
-struct cpuData deQueue(struct Queue* queue);
-struct cpuData front(struct Queue* queue);
-struct cpuData rear(struct Queue* queue);
+// bool isFull(struct Queue* queue);
+// bool isEmpty(struct Queue* queue);
+// struct Queue* cretaeQueue(unsigned size);
+// void enQueue(struct Queue* queue, struct cpuData arg);
+// struct cpuData deQueue(struct Queue* queue);
+// struct cpuData front(struct Queue* queue);
+// struct cpuData rear(struct Queue* queue);
 
 
 struct cpuData cuttingCpuData(char* lineBuf);

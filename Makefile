@@ -1,48 +1,22 @@
 CC = gcc
-CXXFLAGS = -std=c11 -Wall -Wextra
-LDFLAGS = 
+SRC_DIR = src
+INC_DIR = .
+OBJ_DIR = obj
+CFLAGS = -std=gnu17 -pthread -g -Wall -Wextra -Wpedantic -O2
+NAME = cppro
+OBJS = $(addprefix $(OBJ_DIR)/, main.o functions.o)
 
-APPNAME = cutProject
-EXT = .c
-SRCDIR = src
-OBJDIR = obj
+all: pre $(OBJS)
+	@$(CC) $(CFLAGS) $(OBJS) -o $(NAME)
 
-SRC = $(wildcard $(SRCDIR)/*$(EXT))
-OBJ = $(SRC:$(SRCDIR)/%$(EXT)=$(OBJDIR)/%.o)
-DEP = $(OBJ:$(OBJDIR)/%.o=%.d)
+pre:
+	@if [ ! -d $(OBJ_DIR) ]; then mkdir $(OBJ_DIR); fi;
 
-RM = rm
-DELOBJ = $(OBJ)
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	@$(CC) $(CFLAGS) -c -I$(INC_DIR) $< -o $@ $(GTK)
 
-DEL = del
-EXE = .exe
-WDELOBJ = $(SRC:$(SRCDIR)/%$(EXT)=$(OBJDIR)\\%.o)
-
-all: $(APPNAME)
-
-$(APPNAME): $(OBJ)
-	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-
-%.d: $(SRCDIR)/%$(EXT)
-	@$(CPP) $(CFLAGS) $< -MM -MT $(@:%.d=$(OBJDIR)/%.o) >$@
-
--include $(DEP)
-
-$(OBJDIR)/%.o: $(SRCDIR)/%$(EXT)
-	$(CC) $(CXXFLAGS) -o $@ -c $<
-
-.PHONY: clean
 clean:
-	$(RM) $(DELOBJ) $(DEP) $(APPNAME)
+	@if [ -d $(OBJ_DIR) ]; then rm -r -f $(OBJ_DIR); fi;
 
-.PHONY: cleandep
-cleandep:
-	$(RM) $(DEP)
-
-.PHONY: cleanw
-cleanw:
-	$(DEL) $(WDELOBJ) $(DEP) $(APPNAME)$(EXE)
-
-.PHONY: cleandepw
-cleandepw:
-	$(DEL) $(DEP)
+distclean: clean
+	@rm -f $(NAME)

@@ -2,14 +2,9 @@
 #include "functions.c"
 
 
-#include <inttypes.h>
+
 //proc/stat/ file
 FILE *procStatFile;
-
-
-
-//Queues
-struct Queue* readerQueue;
 
 
 
@@ -18,10 +13,11 @@ pthread_t reader,analyzer,printer,watchdog,logger;
 
 pthread_mutex_t readerLineBufMutex;
 
+sem_t readerBufferFull, readerBufferEmpty;
 
 //Main functions
 
-void* readData(void* arg)
+void* readData(struct Queue* arg)
 {
     
     for(;;)
@@ -34,28 +30,67 @@ void* readData(void* arg)
         
         char* lineBuf = NULL;
         size_t lineBufSize = 0;
-        ssize_t lineSize = 0;
+        int lineCounter = 0;
+        struct cpuData toSent;
 
-        lineSize = getline(&lineBuf, &lineBufSize, procStatFile);
+        
            
         char checkCpuChar[3];
-        strncpy(checkCpuChar, lineBuf, 3);
-        
-        if(strcmp("cpu",checkCpuChar) != 0 )
+        while(1)
         {
-            break;
+            getline(&lineBuf, &lineBufSize, procStatFile);
+            if(strlen(lineBuf)>3)
+            {
+                strncpy(checkCpuChar, lineBuf, 3);
+            }
+            
+            
+            if(strcmp("cpu",checkCpuChar) != 0 )
+            {
+                break;
+            }
+            toSent = cuttingCpuData(lineBuf);
+            sem_wait(&readerBufferEmpty);
+            pthread_mutex_lock(&readerLineBufMutex);
+            enQueue(arg, toSent);
+            pthread_mutex_unlock(&readerLineBufMutex);
+            sem_post(&readerBufferFull);
+            printf("%"PRIu64"\n", arg->rear->key.user);
+            lineCounter++;
         }
 
-        pthread_mutex_lock(&readerLineBufMutex);
-        struct cpuData toSent = cuttingCpuData(lineBuf);
-        enQueue(readerQueue,toSent);
-        pthread_mutex_unlock(&readerLineBufMutex);    
+
+        
+
+        
+           
         
         free(lineBuf);
         lineBuf = NULL;
 
+        fclose(procStatFile);
+        procStatFile=NULL;
+        
         
     }   
+    return NULL;
+}
+
+void* analyzeData(struct Queue* arg)
+{
+    struct cpuData data;
+
+    for(;;)
+    {
+        sem_wait(&readerBufferFull);
+        pthread_mutex_lock(&readerLineBufMutex);
+        data = arg->front->key;
+        printf("%"PRIu64"\n", arg->rear->key.user);
+
+        sem_post(&readerBufferEmpty);
+        pthread_mutex_unlock(&readerLineBufMutex);
+    }
+
 }
 
 void* loggingData(void* arg)
@@ -66,6 +101,12 @@ void* loggingData(void* arg)
 
 void clearAll()
 {
+    sem_destroy(&readerBufferEmpty);
+    sem_destroy(&readerBufferFull);
+
+
+    pthread_mutex_destroy(&readerLineBufMutex);
+
     //clearing pthreaders
     pthread_join(reader,NULL);
     pthread_join(analyzer,NULL);
@@ -75,13 +116,20 @@ void clearAll()
 
 
     //closing file
-    fclose(procStatFile);
-    procStatFile=NULL;
+
 }
 
-int main()
+int main(int argc, char *argv[])
 {
-    pthread_create(&reader,NULL,&readData,NULL);
+    struct Queue* readerQueue = createQueue();
+
+    sem_init(&readerBufferEmpty, 0 ,15);
+    sem_init(&readerBufferFull, 0 ,0);
+
+    pthread_mutex_init(&readerLineBufMutex,NULL);
+
+    pthread_create(&reader,NULL,&readData,readerQueue);  
+    pthread_create(&analyzer,NULL,&analyzeData,readerQueue);
     clearAll();
     return EXIT_SUCCESS;
 }
