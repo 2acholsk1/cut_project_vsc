@@ -1,71 +1,6 @@
 #include "functions.h"
 
 
-
-//creating a queue
-// struct Queue* cretaeQueue(unsigned _capacity)
-// {
-//     struct Queue* queue = (struct Queue*)malloc(sizeof(struct Queue));
-//     queue->capacity = _capacity;
-//     queue->front = queue->size = 0;
-//     queue->rear = _capacity - 1;
-//     queue->array = (struct cpuData*)malloc(queue->capacity * sizeof(struct cpuData));
-//     return queue;
-// };
-
-// bool isFull(struct Queue* queue)
-// {
-//     return queue->size == queue->capacity;
-// }
-
-// bool isEmpty(struct Queue* queue)
-// {
-//     return queue->size == 0;
-// }
-
-// void enQueue(struct Queue* _queue, struct cpuData arg)
-// {
-//     struct Queue* queue= cretaeQueue(1000);
-//     if(isFull(queue))
-//     {
-//         return;
-//     }
-    
-//     queue->array[queue->rear] = arg;
-//     queue->size = queue->size + 1;
-//     queue->rear = (queue->rear + 1) % queue->capacity;
-// }
-
-// struct cpuData deQueue(struct Queue* queue)
-// {
-//     if(isEmpty(queue))
-//     {
-//         return;
-//     }
-//     struct cpuData item = queue->array[queue->front];
-//     queue->front = (queue->front + 1) % queue->capacity;
-//     queue->size = queue->size - 1;
-//     return item;
-// };
-
-// struct cpuData front(struct Queue* queue)
-// {
-//     if(isEmpty(queue))
-//     {
-//         return queue->array[0];
-//     }
-//     return queue->array[queue->front];
-// };
-
-// struct cpuData rear(struct Queue* queue)
-// {
-//     if(isEmpty(queue))
-//     {
-//         return queue->array[0];
-//     }
-//     return queue->array[queue->rear];
-// };
-
 struct QNode* newNode(struct cpuData arg)
 {
     struct QNode* temp = (struct QNode*)malloc(sizeof(struct QNode));
@@ -89,7 +24,8 @@ void enQueue(struct Queue* queue, struct cpuData key)
 {
     struct QNode* temp = newNode(key);
   
-    if (queue->rear == 0) {
+    if (queue->rear == NULL) 
+    {
         queue->front = queue->rear = temp;
         return;
     }

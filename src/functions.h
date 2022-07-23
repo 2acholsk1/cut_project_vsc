@@ -16,7 +16,7 @@ typedef struct cpuData
 {
     char* whichCpu;
     uint64_t user,nice,system,idle,iowait,irq,softirq,steal;
-};
+}cpuData;
 
 struct QNode
 {
@@ -33,15 +33,6 @@ struct QNode* newNode(struct cpuData arg);
 struct Queue* createQueue();
 void enQueue(struct Queue* queue, struct cpuData arg);
 void deQueue(struct Queue* queue);
-
-//Queue functions
-// bool isFull(struct Queue* queue);
-// bool isEmpty(struct Queue* queue);
-// struct Queue* cretaeQueue(unsigned size);
-// void enQueue(struct Queue* queue, struct cpuData arg);
-// struct cpuData deQueue(struct Queue* queue);
-// struct cpuData front(struct Queue* queue);
-// struct cpuData rear(struct Queue* queue);
 
 
 struct cpuData cuttingCpuData(char* lineBuf);
