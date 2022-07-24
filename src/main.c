@@ -10,7 +10,7 @@ struct Queue* readerQueue;
 struct Queue* analyzerQueue;
 
 //Threads and etc.
-pthread_t reader, analyzer, printer, watchdog, logger;
+pthread_t reader, analyzer, printer;
 
 pthread_mutex_t readerLineBufMutex;
 pthread_mutex_t analyzerMutex;
@@ -27,18 +27,16 @@ void* readData(void* arg)
     struct cpuData toSent[READER_AND_ANALYZER_QUEUE_SIZE];
     for(;;)
     {
-        
-        if((procStatFile=fopen("/proc/stat","r"))==NULL)
-        {
-            exit(EXIT_FAILURE);
-        }
-        
         char* lineBuf = NULL;
         size_t lineBufSize = 0;
         char checkCpuChar[3];
         int lineCounter = 0;
         ssize_t lineSize;
-  
+          
+        if((procStatFile=fopen("/proc/stat","r"))==NULL)
+        {
+            exit(EXIT_FAILURE);
+        }
         while(1)
         {
             lineSize = getline(&lineBuf, &lineBufSize, procStatFile);
@@ -54,9 +52,6 @@ void* readData(void* arg)
             }
             toSent[lineCounter] = cuttingCpuData(lineBuf);
             lineCounter++;
-            
-
-            //printf("%"PRIu64"\n", readerQueue->rear->key.user);
         }
         fclose(procStatFile);       
         procStatFile=NULL;
@@ -74,6 +69,7 @@ void* readData(void* arg)
         sleep(1);
         
     }   
+    return NULL;
 }
 
 void* analyzeData(void* arg)
@@ -151,19 +147,26 @@ void* printData(void* arg)
 }
 
 
-void* loggingData(void* arg)
-{
+// void* loggingData(void* arg)
+// {
 
-}
+// }
 
 
 void clearAll()
 {
+    pthread_mutex_unlock(&readerLineBufMutex);
+    pthread_mutex_unlock(&analyzerMutex);
+    sem_post(&readerBufferEmpty);
+    sem_post(&readerBufferFull);
+    sem_post(&analyzerBufferFull);
+    sem_post(&analyzerBufferEmpty);
+
+
     pthread_join(reader,NULL);
     pthread_join(analyzer,NULL);
     pthread_join(printer,NULL);
-    pthread_join(watchdog,NULL);
-    pthread_join(logger,NULL);
+
 
 
     sem_destroy(&readerBufferEmpty);
@@ -180,25 +183,28 @@ void clearAll()
 int main()
 {
     
-    
+    readerQueue = createQueue();
+    analyzerQueue = createQueue();
 
-    sem_init(&readerBufferEmpty, 0 ,1);
+    sem_init(&readerBufferEmpty,0 ,1);
     sem_init(&readerBufferFull, 0 ,0);
 
     pthread_mutex_init(&readerLineBufMutex,NULL);
 
-    readerQueue = createQueue();
-
+    
     sem_init(&analyzerBufferEmpty,0,1);
     sem_init(&analyzerBufferFull,0,0);
 
     pthread_mutex_init(&analyzerMutex,NULL);
     
-    analyzerQueue = createQueue();
+    
 
     pthread_create(&reader,NULL,&readData,NULL);  
     pthread_create(&analyzer,NULL,&analyzeData,NULL);
     pthread_create(&printer,NULL,&printData,NULL);
+
+
+
     clearAll();
     return EXIT_SUCCESS;
 }
