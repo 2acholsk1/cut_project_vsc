@@ -16,6 +16,7 @@
 typedef struct cpuData
 {
     char* whichCpu;
+    float cpuPercentage;
     uint64_t user,nice,system,idle,iowait,irq,softirq,steal;
 }cpuData;
 

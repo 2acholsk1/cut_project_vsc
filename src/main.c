@@ -1,7 +1,7 @@
 #include "functions.h"
 #include "functions.c"
 
-#define READER_QUEUE_SIZE 13
+#define READER_AND_ANALYZER_QUEUE_SIZE 13
 
 //proc/stat/ file
 FILE *procStatFile;
@@ -22,7 +22,7 @@ sem_t analyzerBufferFull, analyzerBufferEmpty;
 
 void* readData(void* arg)
 {
-    struct cpuData toSent[READER_QUEUE_SIZE];
+    struct cpuData toSent[READER_AND_ANALYZER_QUEUE_SIZE];
     for(;;)
     {
         
@@ -36,8 +36,7 @@ void* readData(void* arg)
         char checkCpuChar[3];
         int lineCounter = 0;
         ssize_t lineSize;
-
-        
+  
         while(1)
         {
             lineSize = getline(&lineBuf, &lineBufSize, procStatFile);
@@ -62,7 +61,7 @@ void* readData(void* arg)
         procStatFile=NULL;
         sem_wait(&readerBufferEmpty);
         pthread_mutex_lock(&readerLineBufMutex);
-        for(int i = 0; i <READER_QUEUE_SIZE; i++)
+        for(int i = 0; i <READER_AND_ANALYZER_QUEUE_SIZE; i++)
         {
             enQueue(readerQueue, toSent[i]);
         }        
@@ -77,14 +76,14 @@ void* readData(void* arg)
 
 void* analyzeData(void* arg)
 {
-    float cpuPercentage[READER_QUEUE_SIZE];
-    struct cpuData toAnalyze[READER_QUEUE_SIZE],prevToAnalyze[READER_QUEUE_SIZE];
+    float cpuPercentage[READER_AND_ANALYZER_QUEUE_SIZE];
+    struct cpuData toAnalyze[READER_AND_ANALYZER_QUEUE_SIZE],prevToAnalyze[READER_AND_ANALYZER_QUEUE_SIZE];
     bool notFirstRound = false;
     for(;;)
     {
         sem_wait(&readerBufferFull);
         pthread_mutex_lock(&readerLineBufMutex);
-        for(int i = 0; i<READER_QUEUE_SIZE; i++)
+        for(int i = 0; i<READER_AND_ANALYZER_QUEUE_SIZE; i++)
         {
             toAnalyze[i] = readerQueue->front->key;
             deQueue(readerQueue);
@@ -96,24 +95,49 @@ void* analyzeData(void* arg)
         //printf("%"PRIu64"\n", readerQueue->rear->key.user);
         if(notFirstRound)
         {
-            for(int i =0;i<READER_QUEUE_SIZE;i++)
+            for(int i =0;i<READER_AND_ANALYZER_QUEUE_SIZE;i++)
             {
-                cpuPercentage[i] = analyzeCpuData(toAnalyze[i],prevToAnalyze[i]);
+                toAnalyze[i].cpuPercentage = analyzeCpuData(toAnalyze[i],prevToAnalyze[i]);
             }
             
         }
-        for(int i =0;i<READER_QUEUE_SIZE;i++)
+        for(int i =0;i<READER_AND_ANALYZER_QUEUE_SIZE;i++)
         {
             prevToAnalyze[i] = toAnalyze[i];
+        }        
+
+        sem_wait(&analyzerBufferFull);
+        pthread_mutex_lock(&analyzerMutex);
+        if(notFirstRound)
+        {
+            for(int i=0; i<READER_AND_ANALYZER_QUEUE_SIZE;i++)
+            {
+                enQueue(analyzerQueue,toAnalyze[i]);
+            }
         }
+
+        pthread_mutex_unlock(&analyzerMutex);
+        sem_post(&analyzerBufferFull);
         notFirstRound = true;
-
-
+        sleep(1);
     }
     return NULL;
 }
 
+void* printData(void* arg)
+{
+    for(;;)
+    {
+        sem_wait(&analyzerBufferFull);
+        pthread_mutex_lock(&analyzerMutex);
 
+
+
+        pthread_mutex_unlock(&analyzerMutex);
+        sem_post(&analyzerBufferEmpty);
+    }
+    return NULL;
+}
 
 
 void* loggingData(void* arg)
@@ -162,6 +186,7 @@ int main()
 
     pthread_create(&reader,NULL,&readData,NULL);  
     pthread_create(&analyzer,NULL,&analyzeData,NULL);
+    pthread_create(&printer,NULL,&printData,NULL);
     clearAll();
     return EXIT_SUCCESS;
 }
