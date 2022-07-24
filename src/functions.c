@@ -50,6 +50,14 @@ void deQueue(struct Queue* queue)
     free(temp);
 }
 
+void destroyQueue(struct Queue* queue)
+{
+    while(queue->front != 0)
+    {
+        deQueue(queue);
+    }
+}
+
 
 
 struct cpuData cuttingCpuData(char* lineBuf)
@@ -97,7 +105,25 @@ struct cpuData cuttingCpuData(char* lineBuf)
             break;
         }       
         counter++;
-        out = strtok (0, " ");        
+        out = strtok (NULL, " ");        
     }
     return *arg;
+}
+
+
+float analyzeCpuData(struct cpuData arg,struct cpuData prevArg)
+{
+    uint64_t prevIdle = prevArg.idle + prevArg.iowait;
+    uint64_t idle = arg.idle + arg.iowait;
+
+    uint64_t prevNonIdle = prevArg.user + prevArg.nice + prevArg.system + prevArg.irq + prevArg.softirq + prevArg.steal;
+    uint64_t nonIdle = arg.user + arg.nice + arg.system + arg.irq + arg.softirq + arg.steal;
+
+    uint64_t prevTotal = prevIdle + prevNonIdle;
+    uint64_t total = idle + nonIdle;
+
+    uint64_t totald = total - prevTotal;
+    uint64_t idled = idle - prevIdle;
+
+    return (float)(totald-idled)*100.f/totald;
 }

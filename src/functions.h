@@ -12,6 +12,7 @@
 #include <semaphore.h>
 
 
+
 typedef struct cpuData
 {
     char* whichCpu;
@@ -29,16 +30,19 @@ struct Queue
     struct QNode *front, *rear;
 };
 
+
+
 struct QNode* newNode(struct cpuData arg);
 struct Queue* createQueue();
 void enQueue(struct Queue* queue, struct cpuData arg);
 void deQueue(struct Queue* queue);
-
-
-struct cpuData cuttingCpuData(char* lineBuf);
-
+void destroyQueue(struct Queue* queue);
 
 //Function for cutting string
+struct cpuData cuttingCpuData(char* lineBuf);
+//Function for receiving data and analyze it
+float analyzeCpuData(struct cpuData arg,struct cpuData prevarg);
+
 
 
 
