@@ -8,7 +8,6 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <inttypes.h>
 #include <semaphore.h>
 
 

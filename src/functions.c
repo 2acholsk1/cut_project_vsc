@@ -13,7 +13,7 @@ struct QNode* newNode(struct cpuData arg)
 
 struct Queue* createQueue()
 {
-    struct Queue* q = (struct Queue*)malloc(sizeof(struct Queue));
+    struct Queue* q = (struct Queue*)malloc(sizeof(struct Queue)+ sizeof(struct cpuData)*13);
     q->front = q->rear = 0;
     return q;
 }
