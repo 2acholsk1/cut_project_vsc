@@ -9,8 +9,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <semaphore.h>
+#include <signal.h>
 
 #define READER_AND_ANALYZER_QUEUE_SIZE 13
+#define WATCHTIME 3
+
+volatile sig_atomic_t done = 0;
 
 //proc/stat/ file
 FILE *procStatFile;
@@ -19,7 +23,7 @@ struct Queue* readerQueue;
 struct Queue* analyzerQueue;
 
 //Threads and etc.
-pthread_t reader, analyzer, printer, watchdog;
+pthread_t reader, analyzer, printer, watchdog, logger;
 
 pthread_mutex_t readerLineBufMutex;
 pthread_mutex_t analyzerMutex;
@@ -37,7 +41,7 @@ void clearAll();
 void* readData()
 {
     struct cpuData toSent[READER_AND_ANALYZER_QUEUE_SIZE];
-    clock_t threadWorkingTime;
+    struct timespec threadWorkingTime;
     for(;;)
     {
         char* lineBuf = NULL;
@@ -71,9 +75,13 @@ void* readData()
             pthread_mutex_unlock(&readerLineBufMutex);
             lineCounter++;
         }
-        sleep(1);
-        // threadWorkingTime = clock();
-        sem_wait(&readerBufferEmpty);
+        
+        timespec_get(&threadWorkingTime, TIME_UTC);
+        threadWorkingTime.tv_sec += WATCHTIME;
+        if(sem_timedwait(&readerBufferEmpty, &threadWorkingTime) < 0)
+        {
+            programNotWorks = true;
+        }
         pthread_mutex_lock(&readerLineBufMutex);
         for(int it = 0; it<READER_AND_ANALYZER_QUEUE_SIZE; it++)
         {
@@ -81,11 +89,9 @@ void* readData()
         }
         pthread_mutex_unlock(&readerLineBufMutex);
         sem_post(&readerBufferFull);
-        // threadWorkingTime=clock()-threadWorkingTime;
-        // if(timeTaken(threadWorkingTime)>2)
-        // {
-        //     programNotWorks=true;
-        // }        
+        
+        sleep(1);
+       
     }   
 }
 
@@ -93,11 +99,16 @@ void* analyzeData()
 {
     struct cpuData toAnalyze[READER_AND_ANALYZER_QUEUE_SIZE];
     struct cpuData prevToAnalyze[READER_AND_ANALYZER_QUEUE_SIZE];
-    
+    struct timespec threadWorkingTime;
     for(;;)
     {
         
-        sem_wait(&readerBufferFull);
+        timespec_get(&threadWorkingTime, TIME_UTC);
+        threadWorkingTime.tv_sec += WATCHTIME;
+        if(sem_timedwait(&readerBufferFull, &threadWorkingTime) < 0)
+        {
+            programNotWorks = true;
+        }
         pthread_mutex_lock(&readerLineBufMutex);
         for(int it = 0; it<READER_AND_ANALYZER_QUEUE_SIZE; it++)
         {
@@ -123,7 +134,12 @@ void* analyzeData()
             prevToAnalyze[it] = toAnalyze[it];
         }        
         
-        sem_wait(&analyzerBufferEmpty);
+        timespec_get(&threadWorkingTime, TIME_UTC);
+        threadWorkingTime.tv_sec += WATCHTIME;
+        if(sem_timedwait(&analyzerBufferEmpty, &threadWorkingTime) < 0)
+        {
+            programNotWorks = true;
+        }
         pthread_mutex_lock(&analyzerMutex);
         if(notFirstRound)
         {
@@ -141,9 +157,15 @@ void* printData()
 {
     float cpuPercentage[READER_AND_ANALYZER_QUEUE_SIZE];
     struct cpuData floatsToPrint[READER_AND_ANALYZER_QUEUE_SIZE];
+    struct timespec threadWorkingTime;
     for(;;)
     {
-        sem_wait(&analyzerBufferFull);
+        timespec_get(&threadWorkingTime, TIME_UTC);
+        threadWorkingTime.tv_sec += WATCHTIME;
+        if(sem_timedwait(&analyzerBufferFull, &threadWorkingTime) < 0)
+        {
+            programNotWorks = true;
+        }
         pthread_mutex_lock(&analyzerMutex);
         if(notFirstRound)
         {
@@ -185,20 +207,32 @@ void* checkingThreads(void* arg)
 {
     for(;;)
     {
+        sleep(WATCHTIME);
         if(programNotWorks)
         {
         printf("Problems with threads. Closing the programme. ");
-        clearAll();
+        // clearAll();
         exit(EXIT_FAILURE);
         }
     }
 
 }
 
-// void* loggingData(void* arg)
-// {
 
-// }
+
+void* loggingData(void* arg)
+{
+    
+}
+
+
+
+void term(int signum)
+{
+    done = 1;
+}
+
+
 
 
 void clearAll()
@@ -208,6 +242,7 @@ void clearAll()
     pthread_join(analyzer,NULL);
     pthread_join(printer,NULL);
     pthread_join(watchdog,NULL);
+    pthread_join(logger,NULL);
 
     sem_destroy(&readerBufferEmpty);
     sem_destroy(&readerBufferFull);
@@ -222,7 +257,11 @@ void clearAll()
 
 int main()
 {
-    
+    struct sigaction action;
+    memset(&action, 0 ,sizeof(struct sigaction));
+    action.sa_handler = term;
+    sigaction(SIGTERM,&action,NULL);
+
     readerQueue = createQueue();
     analyzerQueue = createQueue();
 
@@ -243,6 +282,7 @@ int main()
     pthread_create(&analyzer,NULL,&analyzeData,NULL);
     pthread_create(&printer,NULL,&printData,NULL);
     pthread_create(&watchdog,NULL,&checkingThreads,NULL);
+    pthread_create(&logger,NULL,&loggingData,NULL);
 
 
 

@@ -127,8 +127,3 @@ float analyzeCpuData(struct cpuData arg,struct cpuData prevArg)
     return (float)(totald-idled)*100.f/totald;
 }
 
-
-double timeTaken(clock_t arg)
-{
-    return ((double)arg)/CLOCKS_PER_SEC;
-}
