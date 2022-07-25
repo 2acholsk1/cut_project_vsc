@@ -30,7 +30,7 @@ struct Queue
 }Queue;
 
 
-
+//Queue functionality
 struct QNode* newNode(struct cpuData arg);
 struct Queue* createQueue();
 void enQueue(struct Queue* queue, struct cpuData arg);

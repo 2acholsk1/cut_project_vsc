@@ -25,17 +25,27 @@ struct Queue* analyzerQueue;
 //Threads and etc.
 pthread_t reader, analyzer, printer, watchdog, logger;
 
+//Mutexes
 pthread_mutex_t readerLineBufMutex;
 pthread_mutex_t analyzerMutex;
 
+//Semaphores
 sem_t readerBufferFull, readerBufferEmpty;
 sem_t analyzerBufferFull, analyzerBufferEmpty;
 
-
+//Variables
 bool notFirstRound = false;
 bool programNotWorks = false;
+
 //Main functions
+void* readData();
+void* analyzeData();
+void* printData();
+void* checkingThreads(void* arg);
+void* loggingData(void* arg);
+void term(int signum);
 void clearAll();
+
 
 
 void* readData()
@@ -61,7 +71,6 @@ void* readData()
             {
                 strncpy(checkCpuChar, lineBuf, 3);
             }
-            
             
             if(strcmp("cpu",checkCpuChar) != 0 )
             {
@@ -91,7 +100,6 @@ void* readData()
         sem_post(&readerBufferFull);
         
         sleep(1);
-       
     }   
 }
 
@@ -120,6 +128,7 @@ void* analyzeData()
         sem_post(&readerBufferEmpty);
         
         sleep(1);
+
         if(notFirstRound)
         {
             for(int j =0;j<READER_AND_ANALYZER_QUEUE_SIZE;j++)
@@ -133,7 +142,7 @@ void* analyzeData()
         {
             prevToAnalyze[it] = toAnalyze[it];
         }        
-        
+
         timespec_get(&threadWorkingTime, TIME_UTC);
         threadWorkingTime.tv_sec += WATCHTIME;
         if(sem_timedwait(&analyzerBufferEmpty, &threadWorkingTime) < 0)
@@ -178,6 +187,7 @@ void* printData()
         }  
         pthread_mutex_unlock(&analyzerMutex);
         sem_post(&analyzerBufferEmpty);
+
         if(notFirstRound)
         {
             for(int it = 0;it<READER_AND_ANALYZER_QUEUE_SIZE;it++)
@@ -198,7 +208,6 @@ void* printData()
         
         sleep(1);
         system("clear");
-        
     }
 }
 
@@ -234,10 +243,8 @@ void term(int signum)
 
 
 
-
 void clearAll()
 {
-
     pthread_join(reader,NULL);
     pthread_join(analyzer,NULL);
     pthread_join(printer,NULL);
@@ -252,7 +259,6 @@ void clearAll()
 
     pthread_mutex_destroy(&readerLineBufMutex);
     pthread_mutex_destroy(&analyzerMutex);
-
 }
 
 int main()
@@ -275,16 +281,12 @@ int main()
     sem_init(&analyzerBufferFull,0,0);
 
     pthread_mutex_init(&analyzerMutex,NULL);
-    
-    
 
     pthread_create(&reader,NULL,&readData,NULL);  
     pthread_create(&analyzer,NULL,&analyzeData,NULL);
     pthread_create(&printer,NULL,&printData,NULL);
     pthread_create(&watchdog,NULL,&checkingThreads,NULL);
     pthread_create(&logger,NULL,&loggingData,NULL);
-
-
 
     clearAll();
     return EXIT_SUCCESS;

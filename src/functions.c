@@ -37,17 +37,18 @@ void enQueue(struct Queue* queue, struct cpuData key)
 
 void deQueue(struct Queue* queue)
 {
-    if (queue->front == 0)
+    if(queue->front == 0)
+    {
         return;
-
+    }
     struct QNode* temp = queue->front;
+    queue->front = queue->front->next;
   
-   queue->front = queue->front->next;
-  
-    if (queue->front == 0)
+    if(queue->front == 0)
+    {
         queue->rear = 0;
-  
-    free(temp);
+    }
+     free(temp);
 }
 
 void destroyQueue(struct Queue* queue)
@@ -72,7 +73,6 @@ struct cpuData cuttingCpuData(char* lineBuf)
         {
             toConvert = atoll(out);
         }
-
         switch (counter)
         {
         case 1:
