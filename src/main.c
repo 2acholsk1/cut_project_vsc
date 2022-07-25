@@ -75,10 +75,7 @@ void* readData()
             enQueue(readerQueue, toSent[it]);
         }
         pthread_mutex_unlock(&readerLineBufMutex);
-        sem_post(&readerBufferFull);        
-
-        
-        
+        sem_post(&readerBufferFull);          
     }   
 }
 
@@ -107,7 +104,7 @@ void* analyzeData()
             for(int j =0;j<READER_AND_ANALYZER_QUEUE_SIZE;j++)
             {
                 toAnalyze[j].cpuPercentage = analyzeCpuData(toAnalyze[j],prevToAnalyze[j]);
-                printf("sending float: %f\n",toAnalyze[j].cpuPercentage);
+                //printf("sending float: %f\n",toAnalyze[j].cpuPercentage);
             }
             
         }
@@ -127,31 +124,51 @@ void* analyzeData()
         }
         pthread_mutex_unlock(&analyzerMutex);
         sem_post(&analyzerBufferFull);
-        notFirstRound = true;
     }
 }
 
-// void* printData()
-// {
-//     float cpuPercentage[READER_AND_ANALYZER_QUEUE_SIZE];
-//     struct cpuData floatsToPrint[READER_AND_ANALYZER_QUEUE_SIZE];
-//     for(;;)
-//     {
-//         sem_wait(&analyzerBufferFull);
-//         pthread_mutex_lock(&analyzerMutex);
-//         // if(notFirstRound)
-//         // {
-//         //     floatsToPrint[i].cpuPercentage = analyzerQueue->front->key.cpuPercentage;
-//         //     printf("show me %f" , floatsToPrint[i]);
-//         //     deQueue(analyzerQueue);
-//         // }  
-//         pthread_mutex_unlock(&analyzerMutex);
-//         sem_post(&analyzerBufferEmpty);
-//         //printf("Show me her: %f",cpuPercentage[0]);
-//         notFirstRound = true;
-//     }
-//     return NULL;
-// }
+void* printData()
+{
+    float cpuPercentage[READER_AND_ANALYZER_QUEUE_SIZE];
+    struct cpuData floatsToPrint[READER_AND_ANALYZER_QUEUE_SIZE];
+    for(;;)
+    {
+        sem_wait(&analyzerBufferFull);
+        pthread_mutex_lock(&analyzerMutex);
+        if(notFirstRound)
+        {
+            for(int it = 0; it<READER_AND_ANALYZER_QUEUE_SIZE;it++)
+            {
+                floatsToPrint[it].cpuPercentage = analyzerQueue->front->key.cpuPercentage;    
+                deQueue(analyzerQueue);
+            }
+
+        }  
+        pthread_mutex_unlock(&analyzerMutex);
+        sem_post(&analyzerBufferEmpty);
+        if(notFirstRound)
+        {
+            for(int it = 0;it<READER_AND_ANALYZER_QUEUE_SIZE;it++)
+            {
+                if(it==0)
+                {
+                    printf("cpu %.1f%%\n",floatsToPrint[it].cpuPercentage);
+
+                }
+                else
+                {
+                    printf("cpu%i %.1f%%\n" ,it-1, floatsToPrint[it].cpuPercentage);
+                }
+            }
+            
+        }
+        notFirstRound = true;
+        
+        sleep(1);
+        system("clear");
+        
+    }
+}
 
 
 // void* loggingData(void* arg)
@@ -199,7 +216,7 @@ int main()
 
     pthread_create(&reader,NULL,&readData,NULL);  
     pthread_create(&analyzer,NULL,&analyzeData,NULL);
-    //pthread_create(&printer,NULL,&printData,NULL);
+    pthread_create(&printer,NULL,&printData,NULL);
 
 
 
