@@ -14,7 +14,6 @@
 
 typedef struct cpuData
 {
-    char* whichCpu;
     float cpuPercentage;
     uint64_t user,nice,system,idle,iowait,irq,softirq,steal;
 }cpuData;
@@ -23,12 +22,12 @@ struct QNode
 {
     struct cpuData key;
     struct QNode* next;
-};
+}QNode;
 
 struct Queue
 {
     struct QNode *front, *rear;
-};
+}Queue;
 
 
 
@@ -42,11 +41,6 @@ void destroyQueue(struct Queue* queue);
 struct cpuData cuttingCpuData(char* lineBuf);
 //Function for receiving data and analyze it
 float analyzeCpuData(struct cpuData arg,struct cpuData prevarg);
-
-
-
-
-
 
 
 #endif

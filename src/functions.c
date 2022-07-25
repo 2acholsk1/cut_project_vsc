@@ -13,7 +13,7 @@ struct QNode* newNode(struct cpuData arg)
 
 struct Queue* createQueue()
 {
-    struct Queue* q = (struct Queue*)malloc(sizeof(struct Queue)+ sizeof(struct cpuData)*20);
+    struct Queue* q = (struct Queue*)malloc(sizeof(struct Queue)+ sizeof(struct QNode)*20);
     q->front = q->rear = 0;
     return q;
 }
@@ -62,7 +62,7 @@ void destroyQueue(struct Queue* queue)
 
 struct cpuData cuttingCpuData(char* lineBuf)
 { 
-    struct cpuData* arg;
+    struct cpuData* arg = (struct cpuData*)malloc(sizeof(struct cpuData));
     char* out = strtok(lineBuf, " ");
     int counter = 0;
     uint64_t toConvert;
@@ -72,11 +72,9 @@ struct cpuData cuttingCpuData(char* lineBuf)
         {
             toConvert = atoll(out);
         }
+
         switch (counter)
         {
-        case 0:
-            arg->whichCpu = out;
-            break;
         case 1:
             arg->user = toConvert;
             break;
@@ -107,6 +105,7 @@ struct cpuData cuttingCpuData(char* lineBuf)
         counter++;
         out = strtok (NULL, " ");        
     }
+    arg->cpuPercentage=0;
     return *arg;
 }
 
