@@ -41,6 +41,7 @@ void destroyQueue(struct Queue* queue);
 struct cpuData cuttingCpuData(char* lineBuf);
 //Function for receiving data and analyze it
 float analyzeCpuData(struct cpuData arg,struct cpuData prevarg);
-
+//function to calculate thread working time
+double timeTaken(clock_t arg);
 
 #endif

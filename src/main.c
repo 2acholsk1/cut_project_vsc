@@ -19,7 +19,7 @@ struct Queue* readerQueue;
 struct Queue* analyzerQueue;
 
 //Threads and etc.
-pthread_t reader, analyzer, printer;
+pthread_t reader, analyzer, printer, watchdog;
 
 pthread_mutex_t readerLineBufMutex;
 pthread_mutex_t analyzerMutex;
@@ -29,11 +29,15 @@ sem_t analyzerBufferFull, analyzerBufferEmpty;
 
 
 bool notFirstRound = false;
+bool programNotWorks = false;
 //Main functions
+void clearAll();
+
 
 void* readData()
 {
     struct cpuData toSent[READER_AND_ANALYZER_QUEUE_SIZE];
+    clock_t threadWorkingTime;
     for(;;)
     {
         char* lineBuf = NULL;
@@ -68,6 +72,7 @@ void* readData()
             lineCounter++;
         }
         sleep(1);
+        // threadWorkingTime = clock();
         sem_wait(&readerBufferEmpty);
         pthread_mutex_lock(&readerLineBufMutex);
         for(int it = 0; it<READER_AND_ANALYZER_QUEUE_SIZE; it++)
@@ -75,7 +80,12 @@ void* readData()
             enQueue(readerQueue, toSent[it]);
         }
         pthread_mutex_unlock(&readerLineBufMutex);
-        sem_post(&readerBufferFull);          
+        sem_post(&readerBufferFull);
+        // threadWorkingTime=clock()-threadWorkingTime;
+        // if(timeTaken(threadWorkingTime)>2)
+        // {
+        //     programNotWorks=true;
+        // }        
     }   
 }
 
@@ -171,6 +181,20 @@ void* printData()
 }
 
 
+void* checkingThreads(void* arg)
+{
+    for(;;)
+    {
+        if(programNotWorks)
+        {
+        printf("Problems with threads. Closing the programme. ");
+        clearAll();
+        exit(EXIT_FAILURE);
+        }
+    }
+
+}
+
 // void* loggingData(void* arg)
 // {
 
@@ -183,6 +207,7 @@ void clearAll()
     pthread_join(reader,NULL);
     pthread_join(analyzer,NULL);
     pthread_join(printer,NULL);
+    pthread_join(watchdog,NULL);
 
     sem_destroy(&readerBufferEmpty);
     sem_destroy(&readerBufferFull);
@@ -217,6 +242,7 @@ int main()
     pthread_create(&reader,NULL,&readData,NULL);  
     pthread_create(&analyzer,NULL,&analyzeData,NULL);
     pthread_create(&printer,NULL,&printData,NULL);
+    pthread_create(&watchdog,NULL,&checkingThreads,NULL);
 
 
 
