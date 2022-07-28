@@ -11,3 +11,7 @@ cd cut_project_vsc
 make
 
 ./cppro
+
+##Info
+
+READER_AND_ANALYZER_QUEUE_SIZE is a number of threads in processor-2
