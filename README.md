@@ -12,6 +12,6 @@ make
 
 ./cppro
 
-##Info
+### Info
 
 READER_AND_ANALYZER_QUEUE_SIZE is a number of threads in processor-2
