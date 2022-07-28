@@ -1,5 +1,5 @@
 #include "functions.h"
-#include "functions.c"
+// #include "functions.c"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,15 +12,19 @@
 #include <signal.h>
 
 #define READER_AND_ANALYZER_QUEUE_SIZE 13
-#define WATCHTIME 3
+#define MAX_LENGTH_OF_LOG_MESSAGE 24
+#define WATCHTIME 2
+#define REFRESH_TIME 1
 
 volatile sig_atomic_t done = 0;
 
 //proc/stat/ file
 FILE *procStatFile;
+FILE *logFile;
 
 struct Queue* readerQueue;
 struct Queue* analyzerQueue;
+
 
 //Threads and etc.
 pthread_t reader, analyzer, printer, watchdog, logger;
@@ -28,14 +32,19 @@ pthread_t reader, analyzer, printer, watchdog, logger;
 //Mutexes
 pthread_mutex_t readerLineBufMutex;
 pthread_mutex_t analyzerMutex;
+pthread_mutex_t debugMutex;
 
 //Semaphores
 sem_t readerBufferFull, readerBufferEmpty;
 sem_t analyzerBufferFull, analyzerBufferEmpty;
+sem_t loggerBufferFull, loggerBufferEmpty;
 
 //Variables
 bool notFirstRound = false;
 bool programNotWorks = false;
+char logMessage[MAX_LENGTH_OF_LOG_MESSAGE] = "";
+int logIterator = 1;
+int counter = 0;
 
 //Main functions
 void* readData();
@@ -64,43 +73,59 @@ void* readData()
         {
             exit(EXIT_FAILURE);
         }
-        while(1)
+        else
         {
-            getline(&lineBuf, &lineBufSize, procStatFile);
-            if(strlen(lineBuf)>3)
+            sem_wait(&loggerBufferEmpty);
+            pthread_mutex_lock(&debugMutex);
+            strcpy(logMessage,"Reading proc/stat file");
+            pthread_mutex_unlock(&debugMutex);
+            sem_post(&loggerBufferFull);
+
+            while(1)
             {
-                strncpy(checkCpuChar, lineBuf, 3);
+                getline(&lineBuf, &lineBufSize, procStatFile);
+                if(strlen(lineBuf)>3)
+                {
+                    strncpy(checkCpuChar, lineBuf, 3);
+                }
+                
+                if(strcmp("cpu",checkCpuChar) != 0 )
+                {
+                    fclose(procStatFile);       
+                    procStatFile=NULL;
+                    free(lineBuf);
+                    break;
+                }
+                pthread_mutex_lock(&readerLineBufMutex);
+                toSent[lineCounter] = cuttingCpuData(lineBuf);
+                pthread_mutex_unlock(&readerLineBufMutex);
+                lineCounter++;
             }
             
-            if(strcmp("cpu",checkCpuChar) != 0 )
+            timespec_get(&threadWorkingTime, TIME_UTC);
+            threadWorkingTime.tv_sec += WATCHTIME;
+            if(sem_timedwait(&readerBufferEmpty, &threadWorkingTime) < 0)
             {
-                fclose(procStatFile);       
-                procStatFile=NULL;
-                free(lineBuf);
-                break;
+                programNotWorks = true;
             }
             pthread_mutex_lock(&readerLineBufMutex);
-            toSent[lineCounter] = cuttingCpuData(lineBuf);
+            for(int it = 0; it<READER_AND_ANALYZER_QUEUE_SIZE; it++)
+            {
+                enQueue(readerQueue, toSent[it]);
+            }
             pthread_mutex_unlock(&readerLineBufMutex);
-            lineCounter++;
+            sem_post(&readerBufferFull);
+            
+            sem_wait(&loggerBufferEmpty);
+            pthread_mutex_lock(&debugMutex);
+            strcpy(logMessage,"Data sent to analyze");
+            pthread_mutex_unlock(&debugMutex);
+            sem_post(&loggerBufferFull);
+
+            sleep(REFRESH_TIME);
         }
-        
-        timespec_get(&threadWorkingTime, TIME_UTC);
-        threadWorkingTime.tv_sec += WATCHTIME;
-        if(sem_timedwait(&readerBufferEmpty, &threadWorkingTime) < 0)
-        {
-            programNotWorks = true;
-        }
-        pthread_mutex_lock(&readerLineBufMutex);
-        for(int it = 0; it<READER_AND_ANALYZER_QUEUE_SIZE; it++)
-        {
-            enQueue(readerQueue, toSent[it]);
-        }
-        pthread_mutex_unlock(&readerLineBufMutex);
-        sem_post(&readerBufferFull);
-        
-        sleep(1);
-    }   
+    } 
+    return NULL;  
 }
 
 void* analyzeData()
@@ -127,21 +152,26 @@ void* analyzeData()
         pthread_mutex_unlock(&readerLineBufMutex);
         sem_post(&readerBufferEmpty);
         
-        sleep(1);
+        sleep(REFRESH_TIME);
 
         if(notFirstRound)
         {
             for(int j =0;j<READER_AND_ANALYZER_QUEUE_SIZE;j++)
             {
                 toAnalyze[j].cpuPercentage = analyzeCpuData(toAnalyze[j],prevToAnalyze[j]);
-                //printf("sending float: %f\n",toAnalyze[j].cpuPercentage);
             }
             
         }
         for(int it =0;it<READER_AND_ANALYZER_QUEUE_SIZE;it++)
         {
             prevToAnalyze[it] = toAnalyze[it];
-        }        
+        }      
+        
+        if(counter==1)
+        {
+            notFirstRound = true;
+        }  
+        counter++;
 
         timespec_get(&threadWorkingTime, TIME_UTC);
         threadWorkingTime.tv_sec += WATCHTIME;
@@ -159,12 +189,18 @@ void* analyzeData()
         }
         pthread_mutex_unlock(&analyzerMutex);
         sem_post(&analyzerBufferFull);
+
+        sem_wait(&loggerBufferEmpty);
+        pthread_mutex_lock(&debugMutex);
+        strcpy(logMessage,"Data sent to print");
+        pthread_mutex_unlock(&debugMutex);
+        sem_post(&loggerBufferFull);
     }
+    return NULL;
 }
 
 void* printData()
 {
-    float cpuPercentage[READER_AND_ANALYZER_QUEUE_SIZE];
     struct cpuData floatsToPrint[READER_AND_ANALYZER_QUEUE_SIZE];
     struct timespec threadWorkingTime;
     for(;;)
@@ -194,21 +230,28 @@ void* printData()
             {
                 if(it==0)
                 {
-                    printf("cpu %.1f%%\n",floatsToPrint[it].cpuPercentage);
+                    printf("cpu -> %.1f%%\n",floatsToPrint[it].cpuPercentage);
 
                 }
                 else
                 {
-                    printf("cpu%i %.1f%%\n" ,it-1, floatsToPrint[it].cpuPercentage);
+                    printf("cpu%i -> %.1f%%\n" ,it-1, floatsToPrint[it].cpuPercentage);
                 }
             }
             
         }
-        notFirstRound = true;
         
-        sleep(1);
+        
+        sem_wait(&loggerBufferEmpty);
+        pthread_mutex_lock(&debugMutex);
+        strcpy(logMessage,"Data printed");
+        pthread_mutex_unlock(&debugMutex);
+        sem_post(&loggerBufferFull);
+
+        sleep(REFRESH_TIME);
         system("clear");
     }
+    return NULL;
 }
 
 
@@ -220,11 +263,11 @@ void* checkingThreads(void* arg)
         if(programNotWorks)
         {
         printf("Problems with threads. Closing the programme. ");
-        // clearAll();
+        clearAll();
         exit(EXIT_FAILURE);
         }
     }
-
+    return NULL;
 }
 
 
@@ -232,6 +275,25 @@ void* checkingThreads(void* arg)
 void* loggingData(void* arg)
 {
     
+    for(;;)
+    {
+        sem_wait(&loggerBufferFull);
+        pthread_mutex_lock(&debugMutex);
+        if((logFile=fopen("debugLogs","a")) == NULL)
+        {
+            clearAll();
+            exit(EXIT_FAILURE);
+        }
+        else
+        {
+            fprintf(logFile,"Message number %i: %s\n",logIterator, logMessage);
+            fclose(logFile);
+        }
+        logIterator++;
+        pthread_mutex_unlock(&debugMutex);
+        sem_post(&loggerBufferEmpty);
+    }
+    return NULL;
 }
 
 
@@ -257,8 +319,12 @@ void clearAll()
     sem_destroy(&analyzerBufferEmpty);
     sem_destroy(&analyzerBufferFull);
 
+    sem_destroy(&loggerBufferEmpty);
+    sem_destroy(&loggerBufferFull);
+
     pthread_mutex_destroy(&readerLineBufMutex);
     pthread_mutex_destroy(&analyzerMutex);
+    pthread_mutex_destroy(&debugMutex);
 }
 
 int main()
@@ -275,12 +341,16 @@ int main()
     sem_init(&readerBufferFull, 0 ,0);
 
     pthread_mutex_init(&readerLineBufMutex,NULL);
-
     
     sem_init(&analyzerBufferEmpty,0,READER_AND_ANALYZER_QUEUE_SIZE);
     sem_init(&analyzerBufferFull,0,0);
 
     pthread_mutex_init(&analyzerMutex,NULL);
+
+    sem_init(&loggerBufferEmpty,0,1);
+    sem_init(&loggerBufferFull,0,0);
+
+    pthread_mutex_init(&debugMutex,NULL);
 
     pthread_create(&reader,NULL,&readData,NULL);  
     pthread_create(&analyzer,NULL,&analyzeData,NULL);

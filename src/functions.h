@@ -3,12 +3,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <semaphore.h>
+
 
 
 
@@ -22,12 +21,12 @@ struct QNode
 {
     struct cpuData key;
     struct QNode* next;
-}QNode;
+};
 
 struct Queue
 {
     struct QNode *front, *rear;
-}Queue;
+};
 
 
 //Queue functionality
