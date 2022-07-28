@@ -1,5 +1,4 @@
 #include "functions.h"
-// #include "functions.c"
 
 #include <stdio.h>
 #include <stdlib.h>
