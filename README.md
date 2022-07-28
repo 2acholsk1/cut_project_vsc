@@ -14,4 +14,4 @@ make
 
 ### Info
 
-READER_AND_ANALYZER_QUEUE_SIZE is a number of threads in processor-2
+READER_AND_ANALYZER_QUEUE_SIZE is a number of threads in processor+2
