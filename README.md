@@ -17,4 +17,5 @@ make
 READER_AND_ANALYZER_QUEUE_SIZE is a number of threads in processor+2
 
 In order to carry out unit tests you need write the command in terminal in right folder:
+
 bash tests.sh
