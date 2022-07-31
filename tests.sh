@@ -23,4 +23,4 @@ sleep 1
 clear
 sed -i '17 c\
 #define TEST 0 ' src/main.c
-
+clear
