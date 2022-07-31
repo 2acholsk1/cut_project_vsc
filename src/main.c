@@ -14,6 +14,7 @@
 #define MAX_LENGTH_OF_LOG_MESSAGE 24
 #define WATCHTIME 2
 #define REFRESH_TIME 1
+#define TEST 0 
 
 volatile sig_atomic_t done = 0;
 
@@ -98,7 +99,12 @@ void* readData()
                 pthread_mutex_lock(&readerLineBufMutex);
                 toSent[lineCounter] = cuttingCpuData(lineBuf);
                 pthread_mutex_unlock(&readerLineBufMutex);
+                if(TEST)
+                {
+                    testCpuDataFunction(toSent[lineCounter]);
+                }
                 lineCounter++;
+
             }
             
             timespec_get(&threadWorkingTime, TIME_UTC);
@@ -158,6 +164,10 @@ void* analyzeData()
             for(int j =0;j<READER_AND_ANALYZER_QUEUE_SIZE;j++)
             {
                 toAnalyze[j].cpuPercentage = analyzeCpuData(toAnalyze[j],prevToAnalyze[j]);
+                if(TEST)
+                {
+                    testAnalyzerFunction(toAnalyze[j].cpuPercentage);
+                }
             }
             
         }
@@ -202,6 +212,7 @@ void* printData()
 {
     struct cpuData floatsToPrint[READER_AND_ANALYZER_QUEUE_SIZE];
     struct timespec threadWorkingTime;
+    char testEnd;
     for(;;)
     {
         timespec_get(&threadWorkingTime, TIME_UTC);
@@ -217,28 +228,45 @@ void* printData()
             {
                 floatsToPrint[it].cpuPercentage = analyzerQueue->front->key.cpuPercentage;    
                 deQueue(analyzerQueue);
+                if(TEST)
+                {
+                    testAnalyzerFunction(floatsToPrint[it].cpuPercentage);
+                }
             }
 
         }  
         pthread_mutex_unlock(&analyzerMutex);
         sem_post(&analyzerBufferEmpty);
 
-        if(notFirstRound)
+        if(!TEST)
         {
-            for(int it = 0;it<READER_AND_ANALYZER_QUEUE_SIZE;it++)
+            if(notFirstRound)
             {
-                if(it==0)
+                for(int it = 0;it<READER_AND_ANALYZER_QUEUE_SIZE;it++)
                 {
-                    printf("cpu -> %.1f%%\n",floatsToPrint[it].cpuPercentage);
+                    if(it==0)
+                    {
+                        printf("cpu -> %.1f%%\n",floatsToPrint[it].cpuPercentage);
 
-                }
-                else
-                {
-                    printf("cpu%i -> %.1f%%\n" ,it-1, floatsToPrint[it].cpuPercentage);
+                    }
+                    else
+                    {
+                        printf("cpu%i -> %.1f%%\n" ,it-1, floatsToPrint[it].cpuPercentage);
+                    }
                 }
             }
-            
         }
+        else
+        {
+            system("clear");
+            printf("Click 'x' and press ENTER to end unit tests\n");
+            scanf("%c",&testEnd);
+            if(testEnd=='x' || testEnd=='X')
+            {
+                exit(EXIT_SUCCESS);
+            }
+        }
+
         
         
         sem_wait(&loggerBufferEmpty);

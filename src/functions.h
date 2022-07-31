@@ -7,7 +7,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
-
+#include <assert.h>
 
 
 
@@ -42,5 +42,8 @@ struct cpuData cuttingCpuData(char* lineBuf);
 float analyzeCpuData(struct cpuData arg,struct cpuData prevarg);
 //Printing debug data
 void debugData(char arg);
+//Test functions
+void testAnalyzerFunction(float cpuPercentage);
+void testCpuDataFunction(struct cpuData arg);
 
 #endif

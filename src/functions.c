@@ -127,3 +127,19 @@ float analyzeCpuData(struct cpuData arg,struct cpuData prevArg)
     return (float)(totald-idled)*100.f/totald;
 }
 
+void testAnalyzerFunction(float cpuPercentage)
+{
+    assert(0<=(int)cpuPercentage<=100);
+}
+
+void testCpuDataFunction(struct cpuData arg)
+{
+    assert(&arg.user != NULL);
+    assert(&arg.nice != NULL);
+    assert(&arg.system != NULL);
+    assert(&arg.idle != NULL);
+    assert(&arg.iowait != NULL);
+    assert(&arg.irq != NULL);
+    assert(&arg.softirq != NULL);
+}
+
