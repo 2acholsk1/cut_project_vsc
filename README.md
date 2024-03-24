@@ -8,7 +8,7 @@ In the terminal in desired path:
 
 2. 'cd cut_project_vsc'
 
-3, 'make'
+3. 'make'
 
 4. './cppro'
 
